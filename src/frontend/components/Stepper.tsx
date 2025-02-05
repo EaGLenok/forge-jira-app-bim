@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   Box,
   Button,
@@ -7,6 +7,7 @@ import {
   xcss,
   ProgressBar,
 } from '@forge/react';
+import {invoke} from "@forge/bridge";
 
 type AnswerOption = {
   label: string;
@@ -97,6 +98,7 @@ const visitedPathBoxStyles = xcss({
 });
 
 const Stepper: React.FC = () => {
+  const [apiData, setApiData] = useState(null);
   const [history, setHistory] = useState<string[]>(['q1']);
   const [userAnswers, setUserAnswers] = useState<Record<string, string>>({});
   const currentId = history[history.length - 1];
@@ -138,8 +140,17 @@ const Stepper: React.FC = () => {
       setHistory(prev => prev.slice(0, -1));
     }
   };
+
+  useEffect(() => {
+    invoke("fetchExternalData")
+        .then((data) => setApiData(data))
+        .catch((error) => console.error("Error fetching data:", error));
+  }, []);
   return (
       <Box xcss={containerStyles}>
+        <Box>
+          {apiData ? `Fetched URL: ${apiData.url}` : "Loading..."} + 123
+        </Box>
         <Heading as="h1">Questionnaire</Heading>
         <ProgressBar
             ariaLabel="Progress"
