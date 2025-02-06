@@ -5,10 +5,6 @@ import ForgeReconciler, {
     Tab,
     TabPanel
 } from '@forge/react';
-
-import IssuePage from './pages/IssuePage';
-import SettingsPage from './pages/SettingsPage';
-import {useState} from "react";
 import QuestionnairePage from "./pages/QuestionnairePage";
 
 const App = () => {
@@ -18,7 +14,7 @@ const App = () => {
                 <Tab>Questions</Tab>
             </TabList>
             <TabPanel>
-                <QuestionnairePage />
+                <QuestionnairePage/>
             </TabPanel>
         </Tabs>
     );
