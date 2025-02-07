@@ -6,15 +6,18 @@ import ForgeReconciler, {
     TabPanel
 } from '@forge/react';
 import QuestionnairePage from "./pages/QuestionnairePage";
+import QuestionBuilderPage from "./pages/QuestionBuilderPage";
 
 const App = () => {
     return (
         <Tabs id="default">
             <TabList>
                 <Tab>Questions</Tab>
+                <Tab>Question Builder</Tab>
             </TabList>
             <TabPanel>
                 <QuestionnairePage/>
+                <QuestionBuilderPage/>
             </TabPanel>
         </Tabs>
     );
