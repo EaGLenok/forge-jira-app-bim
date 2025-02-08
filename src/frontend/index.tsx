@@ -17,6 +17,8 @@ const App = () => {
             </TabList>
             <TabPanel>
                 <QuestionnairePage/>
+            </TabPanel>
+            <TabPanel>
                 <QuestionBuilderPage/>
             </TabPanel>
         </Tabs>

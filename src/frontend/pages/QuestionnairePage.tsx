@@ -1,5 +1,5 @@
 import React from "react";
-import Stepper from "../components/Stepper";
+import Stepper from "../components/Stepper/Stepper";
 
 
 const QuestionnairePage = () => {

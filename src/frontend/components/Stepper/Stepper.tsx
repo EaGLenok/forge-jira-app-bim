@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Box, Heading, Text, xcss } from '@forge/react';
-import { QuestionNode } from '../../utils/types';
-import { topics } from '../../utils/constants';
+import { QuestionNode } from '../../../utils/types';
+import { topics } from '../../../utils/constants';
 import QuestionDisplay from './QuestionDisplay';
 import NavigationButtons from './NavigationButtons';
 import UserAnswers from './UserAnswers';
