@@ -51,16 +51,21 @@ interface Props {
         answerIndex: number,
         nextId: string
     ) => void;
+    onCheckBoxNextChange: (
+        topicId: string,
+        questionId: string,
+        nextId: string
+    ) => void;
 }
 
-const TopicCard: React.FC<Props> = ({topic, allQuestionIds, onRemoveTopic, onAddQuestion, onRemoveQuestion, onQuestionTextChange, onQuestionTypeChange, onAddAnswer, onRemoveAnswer, onAnswerLabelChange, onRadioNextChange}) => {
+const TopicCard: React.FC<Props> = ({topic, allQuestionIds, onRemoveTopic, onAddQuestion, onRemoveQuestion, onQuestionTextChange, onQuestionTypeChange, onAddAnswer, onRemoveAnswer, onAnswerLabelChange, onRadioNextChange, onCheckBoxNextChange}) => {
     return (
         <Box xcss={topicContainerStyles}>
             <Box xcss={headingRowStyles}>
                 <Heading as="h3">Topic {topic.topicId}</Heading>
             </Box>
             <Box xcss={removeButtonWrapperStyles}>
-                <Button appearance="default" onClick={() => onRemoveTopic(topic.topicId)}>
+                <Button appearance="danger" onClick={() => onRemoveTopic(topic.topicId)}>
                     Remove
                 </Button>
             </Box>
@@ -84,6 +89,7 @@ const TopicCard: React.FC<Props> = ({topic, allQuestionIds, onRemoveTopic, onAdd
                     onRemoveAnswer={onRemoveAnswer}
                     onAnswerLabelChange={onAnswerLabelChange}
                     onRadioNextChange={onRadioNextChange}
+                    onCheckBoxNextChange={onCheckBoxNextChange}
                 />
             ))}
         </Box>

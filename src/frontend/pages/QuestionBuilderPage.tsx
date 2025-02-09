@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { invoke } from '@forge/bridge';
 import { Box, Button, Heading, xcss } from '@forge/react';
 import { Topic, ButtonType, QuestionNode, AnswerOption } from '../../utils/types';
 import TopicCard from '../components/QuestionBuilder/TopicCard';
@@ -9,10 +10,6 @@ const pageWrapperStyles = xcss({
     minHeight: '100vh',
     backgroundColor: 'color.background.neutral.subtle',
     padding: 'space.600',
-});
-
-const headerStyles = xcss({
-    marginBottom: 'space.400',
 });
 
 const addTopicWrapperStyles = xcss({
@@ -33,12 +30,45 @@ function generateQuestionId(topic: Topic): string {
 const QuestionBuilderPage: React.FC = () => {
     const [topics, setTopics] = useState<Topic[]>([]);
 
+    useEffect(() => {
+        (async () => {
+            try {
+                console.log('CALLING getQuestions from storage...');
+                const stored: Topic[] = await invoke('getQuestions');
+
+                if (stored && stored.length > 0) {
+                    console.log('LOADED FROM STORAGE:', stored);
+                    setTopics(stored);
+                } else {
+                    console.warn('WARNING: No data found in storage or empty array returned.');
+                }
+            } catch (error) {
+                console.error('Error loading topics from storage:', error);
+            }
+        })();
+    }, []);
+
+    useEffect(() => {
+        if (topics.length === 0) {
+            console.log('SKIPPING SAVE: Topics array is empty, not saving.');
+            return;
+        }
+
+        (async () => {
+            try {
+                console.log('CALLING saveQuestions, topics data:', topics);
+                await invoke('saveQuestions', { payload: topics });
+                console.log('SUCCESS: Topics successfully saved to storage.');
+            } catch (error) {
+                console.error('ERROR: Failed to save topics to storage:', error);
+            }
+        })();
+    }, [topics]);
+
+
+
     const allQuestionIds = useMemo(() => {
-        const ids: string[] = [];
-        topics.forEach(topic => {
-            topic.questions.forEach(q => ids.push(q.id));
-        });
-        return ids;
+        return topics.flatMap(topic => topic.questions.map(q => q.id));
     }, [topics]);
 
     const handleAddTopic = () => {
@@ -57,9 +87,10 @@ const QuestionBuilderPage: React.FC = () => {
                 if (t.topicId !== topicId) return t;
                 const newQuestion: QuestionNode = {
                     id: generateQuestionId(t),
-                    text: 'New question',
+                    text: '',
                     type: ButtonType.RadioButton,
                     answers: [],
+                    next: 'unused',
                 };
                 return { ...t, questions: [...t.questions, newQuestion] };
             })
@@ -101,10 +132,10 @@ const QuestionBuilderPage: React.FC = () => {
                     questions: t.questions.map(q => {
                         if (q.id !== questionId) return q;
                         if (newType === ButtonType.Checkbox) {
-                            const updatedAnswers = q.answers.map(a => ({ ...a, next: 'auto' }));
-                            return { ...q, type: newType, answers: updatedAnswers };
+                            const updatedAnswers = q.answers.map(a => ({ ...a, next: 'unused' }));
+                            return { ...q, type: newType, next: 'unused', answers: updatedAnswers };
                         }
-                        return { ...q, type: newType };
+                        return { ...q, type: newType, next: undefined };
                     }),
                 };
             })
@@ -120,8 +151,8 @@ const QuestionBuilderPage: React.FC = () => {
                     questions: t.questions.map(q => {
                         if (q.id !== questionId) return q;
                         const newAnswer: AnswerOption = {
-                            label: 'Option ...',
-                            next: q.type === ButtonType.Checkbox ? 'auto' : 'unused',
+                            label: '',
+                            next: 'unused',
                         };
                         return { ...q, answers: [...q.answers, newAnswer] };
                     }),
@@ -192,11 +223,25 @@ const QuestionBuilderPage: React.FC = () => {
         );
     };
 
+    const handleCheckBoxNextChange = (topicId: string, questionId: string, nextId: string) => {
+        setTopics(prev =>
+            prev.map(t => {
+                if (t.topicId !== topicId) return t;
+                return {
+                    ...t,
+                    questions: t.questions.map(q => {
+                        if (q.id !== questionId) return q;
+                        if (q.type !== ButtonType.Checkbox) return q;
+                        return { ...q, next: nextId };
+                    }),
+                };
+            })
+        );
+    };
+
     return (
         <Box xcss={pageWrapperStyles}>
-            <Heading as="h2">
-                Question Builder
-            </Heading>
+            <Heading as="h2">Question Builder</Heading>
 
             <Box xcss={addTopicWrapperStyles}>
                 <Button appearance="primary" onClick={handleAddTopic}>
@@ -218,6 +263,7 @@ const QuestionBuilderPage: React.FC = () => {
                     onRemoveAnswer={handleRemoveAnswer}
                     onAnswerLabelChange={handleAnswerLabelChange}
                     onRadioNextChange={handleRadioNextChange}
+                    onCheckBoxNextChange={handleCheckBoxNextChange}
                 />
             ))}
 

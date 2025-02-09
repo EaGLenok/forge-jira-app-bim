@@ -1,6 +1,6 @@
 import React from 'react';
-import { Box, Button, Text, Textfield, Select, xcss } from '@forge/react';
-import { QuestionNode } from '../../../utils/types';
+import { Box, Button, Textfield, Select, xcss } from '@forge/react';
+import { QuestionNode, ButtonType } from '../../../utils/types';
 
 const answerContainerStyles = xcss({
     display: 'block',
@@ -10,24 +10,32 @@ const answerContainerStyles = xcss({
     borderRadius: 'border.radius',
 });
 
-const labelInputWrapperStyles = xcss({
-    display: 'block',
-    marginBottom: 'space.100',
+const inputRowStyles = xcss({
+    display: 'inline-block',
+    marginRight: 'space.100',
 });
 
-const radioSelectWrapperStyles = xcss({
-    display: 'block',
-    marginBottom: 'space.100',
+const removeButtonRowStyles = xcss({
+    display: 'inline-block',
+    marginLeft: 'space.100',
 });
 
-const removeButtonWrapperStyles = xcss({
+const nextSelectWrapperStyles = xcss({
     display: 'block',
     marginTop: 'space.100',
 });
 
+const narrowSelectStyles = xcss({
+    display: 'inline-block',
+    width: '300px',
+});
+
 function parseId(id: string) {
-    const [tStr, qStr] = id.split('.');
-    return { topicNum: parseInt(tStr, 10), questionNum: parseInt(qStr, 10) };
+    const [topicStr, questionStr] = id.split('.');
+    return {
+        topicNum: parseInt(topicStr, 10),
+        questionNum: parseInt(questionStr, 10),
+    };
 }
 
 function isIdAfter(currentId: string, candidateId: string) {
@@ -62,52 +70,47 @@ const AnswerList: React.FC<Props> = ({topicId, question, allQuestionIds, onRemov
         <>
             {question.answers.map((ans, idx) => (
                 <Box key={idx} xcss={answerContainerStyles}>
-                    <Box xcss={labelInputWrapperStyles}>
-                        <Textfield
-                            name="AnswerLabel"
-                            value={ans.label}
-                            onChange={(e) =>
-                                onAnswerLabelChange(topicId, question.id, idx, e.target.value)
-                            }
-                        />
-                    </Box>
-
-                    {question.type === 'RadioButton' && (
-                        <Box xcss={radioSelectWrapperStyles}>
-                            <Select
-                                placeholder="Next Question"
-                                options={allQuestionIds
-                                    .filter((id) => isIdAfter(question.id, id))
-                                    .map((id) => ({ label: id, value: id }))}
-                                value={
-                                    ans.next && ans.next !== 'unused'
-                                        ? { label: ans.next, value: ans.next }
-                                        : null
+                    <Box>
+                        <Box xcss={inputRowStyles}>
+                            <Textfield
+                                placeholder="Answer"
+                                value={ans.label}
+                                onChange={(e) =>
+                                    onAnswerLabelChange(topicId, question.id, idx, e.target.value)
                                 }
-                                onChange={(option) => {
-                                    if (!option) return;
-                                    onRadioNextChange(topicId, question.id, idx, option.value);
-                                }}
                             />
                         </Box>
-                    )}
+                        <Box xcss={removeButtonRowStyles}>
+                            <Button
+                                appearance="danger"
+                                onClick={() => onRemoveAnswer(topicId, question.id, idx)}
+                            >
+                                Remove
+                            </Button>
+                        </Box>
+                    </Box>
 
-                    {question.type === 'Checkbox' && (
-                        <Box xcss={{ marginTop: 'space.100' }}>
-                            <Text>
-                                Next: {ans.next} (auto)
-                            </Text>
+                    {question.type === ButtonType.RadioButton && (
+                        <Box xcss={nextSelectWrapperStyles}>
+                            <Box xcss={narrowSelectStyles}>
+                                <Select
+                                    placeholder="Next Question"
+                                    options={allQuestionIds
+                                        .filter((id) => isIdAfter(question.id, id))
+                                        .map((id) => ({ label: id, value: id }))}
+                                    value={
+                                        ans.next && ans.next !== 'unused'
+                                            ? { label: ans.next, value: ans.next }
+                                            : null
+                                    }
+                                    onChange={(option) => {
+                                        if (!option) return;
+                                        onRadioNextChange(topicId, question.id, idx, option.value);
+                                    }}
+                                />
+                            </Box>
                         </Box>
                     )}
-
-                    <Box xcss={removeButtonWrapperStyles}>
-                        <Button
-                            appearance="subtle"
-                            onClick={() => onRemoveAnswer(topicId, question.id, idx)}
-                        >
-                            Remove
-                        </Button>
-                    </Box>
                 </Box>
             ))}
         </>

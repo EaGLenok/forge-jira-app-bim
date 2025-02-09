@@ -1,30 +1,28 @@
 import Resolver from '@forge/resolver';
-import api from '@forge/api';
+import api, { storage } from '@forge/api';
 
 const resolver = new Resolver();
 
-resolver.define('fetchExternalData', async () => {
+resolver.define('getQuestions', async () => {
   try {
-    console.log("Making request to external API...");
-
-    const response = await api.fetch('https://httpbin.org/get');
-
-    console.log("Response status:", response.status);
-    console.log("Response headers:", response.headers);
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("Error response body:", errorText);
-      throw new Error(`Error fetching external data: ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    console.log("Fetched data:", data);
-
-    return data;
+    console.log("Fetching stored questions...");
+    const questions = await storage.get('questions') || [];
+    console.log("Stored questions:", questions);
+    return questions;
   } catch (error) {
-    console.error("Error fetching external data:", error);
-    throw new Error("Failed to fetch external data");
+    console.error("Error retrieving stored questions:", error);
+    throw new Error("Failed to fetch stored questions");
+  }
+});
+
+resolver.define('saveQuestions', async ({ payload }) => {
+  try {
+    console.log("Saving questions:", payload);
+    await storage.set('questions', payload);
+    return { success: true };
+  } catch (error) {
+    console.error("Error saving questions:", error);
+    throw new Error("Failed to save questions");
   }
 });
 

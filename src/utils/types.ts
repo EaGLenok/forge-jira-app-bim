@@ -1,6 +1,6 @@
 export enum ButtonType {
     Checkbox = "Checkbox",
-    RadioButton = "RadioButton"
+    RadioButton = "RadioButton",
 }
 
 export interface AnswerOption {
@@ -13,6 +13,7 @@ export interface QuestionNode {
     text: string;
     type: ButtonType;
     answers: AnswerOption[];
+    next?: string;
 }
 
 export interface Topic {
