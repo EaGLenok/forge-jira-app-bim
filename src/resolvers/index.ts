@@ -1,29 +1,41 @@
 import Resolver from '@forge/resolver';
-import api, { storage } from '@forge/api';
+import { storage } from '@forge/api';
 
 const resolver = new Resolver();
 
 resolver.define('getQuestions', async () => {
   try {
-    console.log("Fetching stored questions...");
-    const questions = await storage.get('questions') || [];
-    console.log("Stored questions:", questions);
+    let questions = await storage.get('questions');
+
+    if (!Array.isArray(questions)) {
+      console.warn("Unexpected data format in storage, resetting to empty array.");
+      questions = [];
+    }
+
     return questions;
   } catch (error) {
     console.error("Error retrieving stored questions:", error);
-    throw new Error("Failed to fetch stored questions");
+    return [];
   }
 });
 
 resolver.define('saveQuestions', async ({ payload }) => {
   try {
-    console.log("Saving questions:", payload);
-    await storage.set('questions', payload);
+
+    const topics = Array.isArray(payload.payload) ? payload.payload : payload;
+
+    if (!Array.isArray(topics)) {
+      console.error("Invalid payload type:", typeof topics);
+      throw new Error("Invalid payload: Expected an array.");
+    }
+
+    await storage.set('questions', topics);
     return { success: true };
   } catch (error) {
     console.error("Error saving questions:", error);
-    throw new Error("Failed to save questions");
+    return { error: "Failed to save questions" };
   }
 });
+
 
 export const handler = resolver.getDefinitions();

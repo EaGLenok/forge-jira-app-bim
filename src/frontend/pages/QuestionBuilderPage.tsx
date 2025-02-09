@@ -27,44 +27,39 @@ function generateQuestionId(topic: Topic): string {
     return `${topic.topicId}.${newIndex}`;
 }
 
-const QuestionBuilderPage: React.FC = () => {
+const QuestionBuilderPage = () => {
     const [topics, setTopics] = useState<Topic[]>([]);
 
     useEffect(() => {
         (async () => {
             try {
-                console.log('CALLING getQuestions from storage...');
-                const stored: Topic[] = await invoke('getQuestions');
-
-                if (stored && stored.length > 0) {
-                    console.log('LOADED FROM STORAGE:', stored);
+                const stored: Topic[] = await invoke("getQuestions");
+                if (Array.isArray(stored) && stored.length > 0) {
                     setTopics(stored);
                 } else {
-                    console.warn('WARNING: No data found in storage or empty array returned.');
+                    console.warn("WARNING: No data found in storage or empty array returned.");
                 }
             } catch (error) {
-                console.error('Error loading topics from storage:', error);
+                console.error("Error loading topics from storage:", error);
             }
         })();
     }, []);
 
     useEffect(() => {
-        if (topics.length === 0) {
-            console.log('SKIPPING SAVE: Topics array is empty, not saving.');
+        if (!Array.isArray(topics) || topics.length === 0) {
             return;
         }
 
-        (async () => {
+        const saveTopics = async () => {
             try {
-                console.log('CALLING saveQuestions, topics data:', topics);
-                await invoke('saveQuestions', { payload: topics });
-                console.log('SUCCESS: Topics successfully saved to storage.');
+                await invoke("saveQuestions", topics);
             } catch (error) {
-                console.error('ERROR: Failed to save topics to storage:', error);
+                console.error("ERROR: Failed to save topics to storage:", error);
             }
-        })();
-    }, [topics]);
+        };
 
+        saveTopics();
+    }, [topics]);
 
 
     const allQuestionIds = useMemo(() => {

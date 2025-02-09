@@ -1,11 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { invoke } from '@forge/bridge';
-import {
-  Box,
-  Heading,
-  Text,
-  xcss
-} from '@forge/react';
+import { Box, Heading, Text, xcss } from '@forge/react';
 import QuestionDisplay from './QuestionDisplay';
 import NavigationButtons from './NavigationButtons';
 import UserAnswers from './UserAnswers';
@@ -48,7 +43,7 @@ const Stepper: React.FC = () => {
   const [topics, setTopics] = useState<Topic[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const [history, setHistory] = useState<string[]>(['']);
+  const [history, setHistory] = useState<string[]>([]);
   const [userAnswers, setUserAnswers] = useState<Record<string, string | string[]>>({});
   const [pendingAnswer, setPendingAnswer] = useState('');
   const [pendingAnswers, setPendingAnswers] = useState<string[]>([]);
@@ -87,9 +82,8 @@ const Stepper: React.FC = () => {
   };
 
   useEffect(() => {
-    if (!topics || topics.length === 0) {
-      return;
-    }
+    if (!topics || topics.length === 0) return;
+
     const qLookup: QuestionLookup = {};
     const qToTopicIdx: TopicIndexMap = {};
 
@@ -103,13 +97,10 @@ const Stepper: React.FC = () => {
     setQuestionLookup(qLookup);
     setQuestionToTopicIndex(qToTopicIdx);
 
-    if (!history[0]) {
-      const firstTopic = topics[0];
-      if (firstTopic?.questions.length > 0) {
-        setHistory([firstTopic.questions[0].id]);
-      }
+    if (history.length === 0 && topics[0].questions.length > 0) {
+      setHistory([topics[0].questions[0].id]);
     }
-  }, [topics]);
+  }, [topics, history]);
 
   const totalQuestions = topics.reduce((sum, t) => sum + t.questions.length, 0);
 
@@ -178,7 +169,7 @@ const Stepper: React.FC = () => {
     }
 
     if (nextPointer && nextPointer !== 'unused') {
-      setHistory(prev => [...prev, nextPointer!]);
+      setHistory(prev => [...prev, nextPointer]);
     } else {
       if (currentTopicIndex < topics.length - 1) {
         const nextTopicFirstQuestion = topics[currentTopicIndex + 1].questions[0].id;
