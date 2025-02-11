@@ -1,19 +1,21 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { invoke } from '@forge/bridge';
 import { Box, Button, Heading, xcss } from '@forge/react';
-import { Topic, ButtonType, QuestionNode, AnswerOption } from '../../utils/types';
 import TopicCard from '../components/QuestionBuilder/TopicCard';
 import PreviewBlock from '../components/QuestionBuilder/PreviewBlock';
+import { Topic, QuestionNode, ButtonType } from '../../utils/types';
 
 const pageWrapperStyles = xcss({
+    display: 'block',
     width: '100%',
     minHeight: '100vh',
     backgroundColor: 'color.background.neutral.subtle',
-    padding: 'space.600',
+    padding: 'space.600'
 });
 
 const addTopicWrapperStyles = xcss({
-    marginBottom: 'space.300',
+    display: 'block',
+    marginBottom: 'space.300'
 });
 
 function generateTopicId(topics: Topic[]): string {
@@ -29,226 +31,230 @@ function generateQuestionId(topic: Topic): string {
 
 const QuestionBuilderPage = () => {
     const [topics, setTopics] = useState<Topic[]>([]);
-
     useEffect(() => {
         (async () => {
             try {
-                const stored: Topic[] = await invoke("getQuestions");
+                const stored: Topic[] = await invoke('getQuestions');
                 if (Array.isArray(stored) && stored.length > 0) {
                     setTopics(stored);
                 } else {
-                    console.warn("WARNING: No data found in storage or empty array returned.");
+                    console.warn('WARNING: No data found in storage or empty array returned.');
                 }
             } catch (error) {
-                console.error("Error loading topics from storage:", error);
+                console.error('Error loading topics from storage:', error);
             }
         })();
     }, []);
-
     useEffect(() => {
-        if (!Array.isArray(topics) || topics.length === 0) {
-            return;
-        }
-
-        const saveTopics = async () => {
+        if (!Array.isArray(topics) || topics.length === 0) return;
+        (async () => {
             try {
-                await invoke("saveQuestions", topics);
+                await invoke('saveQuestions', topics);
             } catch (error) {
-                console.error("ERROR: Failed to save topics to storage:", error);
+                console.error('ERROR: Failed to save topics to storage:', error);
             }
-        };
-
-        saveTopics();
+        })();
     }, [topics]);
-
-
-    const allQuestionIds = useMemo(() => {
-        return topics.flatMap(topic => topic.questions.map(q => q.id));
-    }, [topics]);
-
     const handleAddTopic = () => {
         const newTopicId = generateTopicId(topics);
         const newTopic: Topic = { topicId: newTopicId, questions: [] };
         setTopics(prev => [...prev, newTopic]);
     };
-
     const handleRemoveTopic = (topicId: string) => {
         setTopics(prev => prev.filter(t => t.topicId !== topicId));
     };
-
     const handleAddQuestion = (topicId: string) => {
         setTopics(prev =>
-            prev.map(t => {
-                if (t.topicId !== topicId) return t;
+            prev.map(topic => {
+                if (topic.topicId !== topicId) return topic;
                 const newQuestion: QuestionNode = {
-                    id: generateQuestionId(t),
+                    id: generateQuestionId(topic),
                     text: '',
                     type: ButtonType.RadioButton,
                     answers: [],
-                    next: 'unused',
+                    next: 'unused'
                 };
-                return { ...t, questions: [...t.questions, newQuestion] };
+                return { ...topic, questions: [...topic.questions, newQuestion] };
             })
         );
     };
-
     const handleRemoveQuestion = (topicId: string, questionId: string) => {
         setTopics(prev =>
-            prev.map(t => {
-                if (t.topicId !== topicId) return t;
-                return {
-                    ...t,
-                    questions: t.questions.filter(q => q.id !== questionId),
-                };
+            prev.map(topic => {
+                if (topic.topicId !== topicId) return topic;
+                return { ...topic, questions: topic.questions.filter(q => q.id !== questionId) };
             })
         );
     };
-
     const handleQuestionTextChange = (topicId: string, questionId: string, newText: string) => {
         setTopics(prev =>
-            prev.map(t => {
-                if (t.topicId !== topicId) return t;
+            prev.map(topic => {
+                if (topic.topicId !== topicId) return topic;
                 return {
-                    ...t,
-                    questions: t.questions.map(q =>
-                        q.id === questionId ? { ...q, text: newText } : q
-                    ),
+                    ...topic,
+                    questions: topic.questions.map(q => (q.id === questionId ? { ...q, text: newText } : q))
                 };
             })
         );
     };
-
     const handleQuestionTypeChange = (topicId: string, questionId: string, newType: ButtonType) => {
         setTopics(prev =>
-            prev.map(t => {
-                if (t.topicId !== topicId) return t;
+            prev.map(topic => {
+                if (topic.topicId !== topicId) return topic;
                 return {
-                    ...t,
-                    questions: t.questions.map(q => {
+                    ...topic,
+                    questions: topic.questions.map(q => {
                         if (q.id !== questionId) return q;
                         if (newType === ButtonType.Checkbox) {
-                            const updatedAnswers = q.answers.map(a => ({ ...a, next: 'unused' }));
-                            return { ...q, type: newType, next: 'unused', answers: updatedAnswers };
+                            return {
+                                ...q,
+                                type: newType,
+                                next: 'unused',
+                                answers: q.answers.map(a => ({ ...a, next: 'unused' }))
+                            };
                         }
-                        return { ...q, type: newType, next: undefined };
-                    }),
+                        return { ...q, type: newType };
+                    })
                 };
             })
         );
     };
-
     const handleAddAnswer = (topicId: string, questionId: string) => {
         setTopics(prev =>
-            prev.map(t => {
-                if (t.topicId !== topicId) return t;
+            prev.map(topic => {
+                if (topic.topicId !== topicId) return topic;
                 return {
-                    ...t,
-                    questions: t.questions.map(q => {
+                    ...topic,
+                    questions: topic.questions.map(q => {
                         if (q.id !== questionId) return q;
-                        const newAnswer: AnswerOption = {
-                            label: '',
-                            next: 'unused',
-                        };
+                        const newAnswer = { label: '', next: 'unused' };
                         return { ...q, answers: [...q.answers, newAnswer] };
-                    }),
+                    })
                 };
             })
         );
     };
-
-    const handleRemoveAnswer = (topicId: string, questionId: string, index: number) => {
+    const handleRemoveAnswer = (topicId: string, questionId: string, answerIndex: number) => {
         setTopics(prev =>
-            prev.map(t => {
-                if (t.topicId !== topicId) return t;
+            prev.map(topic => {
+                if (topic.topicId !== topicId) return topic;
                 return {
-                    ...t,
-                    questions: t.questions.map(q => {
+                    ...topic,
+                    questions: topic.questions.map(q => {
                         if (q.id !== questionId) return q;
                         const updated = [...q.answers];
-                        updated.splice(index, 1);
+                        updated.splice(answerIndex, 1);
                         return { ...q, answers: updated };
-                    }),
+                    })
                 };
             })
         );
     };
-
-    const handleAnswerLabelChange = (
-        topicId: string,
-        questionId: string,
-        index: number,
-        newLabel: string
-    ) => {
+    const handleAnswerLabelChange = (topicId: string, questionId: string, answerIndex: number, newLabel: string) => {
         setTopics(prev =>
-            prev.map(t => {
-                if (t.topicId !== topicId) return t;
+            prev.map(topic => {
+                if (topic.topicId !== topicId) return topic;
                 return {
-                    ...t,
-                    questions: t.questions.map(q => {
+                    ...topic,
+                    questions: topic.questions.map(q => {
                         if (q.id !== questionId) return q;
-                        const newAnswers = [...q.answers];
-                        newAnswers[index] = { ...newAnswers[index], label: newLabel };
+                        const newAnswers = q.answers.map((a, idx) => (idx === answerIndex ? { ...a, label: newLabel } : a));
                         return { ...q, answers: newAnswers };
-                    }),
+                    })
                 };
             })
         );
     };
-
-    const handleRadioNextChange = (
-        topicId: string,
-        questionId: string,
-        answerIndex: number,
-        nextId: string
-    ) => {
+    const handleRadioNextChange = (topicId: string, questionId: string, answerIndex: number, nextId: string) => {
         setTopics(prev =>
-            prev.map(t => {
-                if (t.topicId !== topicId) return t;
+            prev.map(topic => {
+                if (topic.topicId !== topicId) return topic;
                 return {
-                    ...t,
-                    questions: t.questions.map(q => {
+                    ...topic,
+                    questions: topic.questions.map(q => {
                         if (q.id !== questionId) return q;
-                        if (q.type !== ButtonType.RadioButton) return q;
-                        const newArr = [...q.answers];
-                        newArr[answerIndex] = { ...newArr[answerIndex], next: nextId };
-                        return { ...q, answers: newArr };
-                    }),
+                        const newAnswers = q.answers.map((a, idx) =>
+                            idx === answerIndex ? { ...a, next: nextId } : a
+                        );
+                        return { ...q, answers: newAnswers };
+                    })
                 };
             })
         );
     };
-
     const handleCheckBoxNextChange = (topicId: string, questionId: string, nextId: string) => {
         setTopics(prev =>
-            prev.map(t => {
-                if (t.topicId !== topicId) return t;
+            prev.map(topic => {
+                if (topic.topicId !== topicId) return topic;
                 return {
-                    ...t,
-                    questions: t.questions.map(q => {
-                        if (q.id !== questionId) return q;
-                        if (q.type !== ButtonType.Checkbox) return q;
-                        return { ...q, next: nextId };
-                    }),
+                    ...topic,
+                    questions: topic.questions.map(q =>
+                        q.id === questionId ? { ...q, next: nextId } : q
+                    )
                 };
             })
         );
     };
-
+    const handleAddSubQuestion = (topicId: string, parentQuestionId: string, answerIndex: number) => {
+        setTopics(prev =>
+            prev.map(topic => {
+                if (topic.topicId !== topicId) return topic;
+                const newId = generateQuestionId(topic);
+                const newQuestion: QuestionNode = {
+                    id: newId,
+                    text: '',
+                    type: ButtonType.RadioButton,
+                    answers: [],
+                    next: 'unused'
+                };
+                const updatedQuestions = topic.questions.map(q => {
+                    if (q.id === parentQuestionId) {
+                        const updatedAnswers = q.answers.map((ans, idx) =>
+                            idx === answerIndex ? { ...ans, next: newId } : ans
+                        );
+                        return { ...q, answers: updatedAnswers };
+                    }
+                    return q;
+                });
+                return { ...topic, questions: [...updatedQuestions, newQuestion] };
+            })
+        );
+    };
+    const handleRemoveSubQuestion = (topicId: string, parentQuestionId: string, answerIndex: number) => {
+        setTopics(prev =>
+            prev.map(topic => {
+                if (topic.topicId !== topicId) return topic;
+                let subQuestionId = '';
+                const updatedQuestions = topic.questions.map(q => {
+                    if (q.id === parentQuestionId) {
+                        const updatedAnswers = q.answers.map((ans, idx) => {
+                            if (idx === answerIndex) {
+                                subQuestionId = ans.next;
+                                return { ...ans, next: 'unused' };
+                            }
+                            return ans;
+                        });
+                        return { ...q, answers: updatedAnswers };
+                    }
+                    return q;
+                });
+                const filteredQuestions = updatedQuestions.filter(q => q.id !== subQuestionId);
+                return { ...topic, questions: filteredQuestions };
+            })
+        );
+    };
     return (
         <Box xcss={pageWrapperStyles}>
             <Heading as="h2">Question Builder</Heading>
-
             <Box xcss={addTopicWrapperStyles}>
                 <Button appearance="primary" onClick={handleAddTopic}>
                     + Add Topic
                 </Button>
             </Box>
-
             {topics.map(topic => (
                 <TopicCard
                     key={topic.topicId}
                     topic={topic}
-                    allQuestionIds={allQuestionIds}
                     onRemoveTopic={handleRemoveTopic}
                     onAddQuestion={handleAddQuestion}
                     onRemoveQuestion={handleRemoveQuestion}
@@ -259,9 +265,10 @@ const QuestionBuilderPage = () => {
                     onAnswerLabelChange={handleAnswerLabelChange}
                     onRadioNextChange={handleRadioNextChange}
                     onCheckBoxNextChange={handleCheckBoxNextChange}
+                    onAddSubQuestion={handleAddSubQuestion}
+                    onRemoveSubQuestion={handleRemoveSubQuestion}
                 />
             ))}
-
             <PreviewBlock data={topics} />
         </Box>
     );

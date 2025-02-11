@@ -1,6 +1,6 @@
 import { Topic, ButtonType } from './types';
 
-export const topics: Topic[] = [
+export const topics = [
     {
         topicId: '1',
         questions: [

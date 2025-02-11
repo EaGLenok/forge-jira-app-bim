@@ -177,15 +177,6 @@ const QuestionCard: React.FC<Props> = ({topicId, question, allQuestionIds, onRem
                     + Add Answer
                 </Button>
             </Box>
-
-            <AnswerList
-                topicId={topicId}
-                question={question}
-                allQuestionIds={allQuestionIds}
-                onRemoveAnswer={onRemoveAnswer}
-                onAnswerLabelChange={onAnswerLabelChange}
-                onRadioNextChange={onRadioNextChange}
-            />
         </Box>
     );
 };

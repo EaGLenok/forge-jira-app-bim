@@ -1,97 +1,92 @@
-import React from 'react';
-import { Box, Button, Heading, xcss } from '@forge/react';
-import QuestionCard from './QuestionCard';
-import { Topic, ButtonType } from '../../../utils/types';
-
-const topicContainerStyles = xcss({
-    display: 'block',
-    marginBottom: 'space.400',
-    padding: 'space.400',
-    borderWidth: 'border.width',
-    borderColor: 'color.border',
-    borderStyle: 'solid',
-    borderRadius: 'border.radius',
-    backgroundColor: 'elevation.surface.raised',
-});
-
-const headingRowStyles = xcss({
-    display: 'inline-block',
-    marginRight: 'space.100',
-});
-
-const removeButtonWrapperStyles = xcss({
-    display: 'inline-block',
-    marginLeft: 'space.100',
-});
-
-const addQuestionWrapperStyles = xcss({
-    display: 'block',
-    marginTop: 'space.200',
-});
+import React, { useState } from 'react';
+import { Box, Button, Heading, Text, xcss } from '@forge/react';
+import QuestionNodeCard from './QuestionNodeCard';
+import { Topic } from '../../../utils/types';
 
 interface Props {
     topic: Topic;
-    allQuestionIds: string[];
     onRemoveTopic: (topicId: string) => void;
     onAddQuestion: (topicId: string) => void;
     onRemoveQuestion: (topicId: string, questionId: string) => void;
     onQuestionTextChange: (topicId: string, questionId: string, newText: string) => void;
-    onQuestionTypeChange: (topicId: string, questionId: string, newType: ButtonType) => void;
+    onQuestionTypeChange: (topicId: string, questionId: string, newType: string) => void;
     onAddAnswer: (topicId: string, questionId: string) => void;
-    onRemoveAnswer: (topicId: string, questionId: string, index: number) => void;
-    onAnswerLabelChange: (
-        topicId: string,
-        questionId: string,
-        index: number,
-        newLabel: string
-    ) => void;
-    onRadioNextChange: (
-        topicId: string,
-        questionId: string,
-        answerIndex: number,
-        nextId: string
-    ) => void;
-    onCheckBoxNextChange: (
-        topicId: string,
-        questionId: string,
-        nextId: string
-    ) => void;
+    onRemoveAnswer: (topicId: string, questionId: string, answerIndex: number) => void;
+    onAnswerLabelChange: (topicId: string, questionId: string, answerIndex: number, newLabel: string) => void;
+    onRadioNextChange: (topicId: string, questionId: string, answerIndex: number, nextId: string) => void;
+    onCheckBoxNextChange: (topicId: string, questionId: string, nextId: string) => void;
+    onAddSubQuestion: (topicId: string, parentQuestionId: string, answerIndex: number) => void;
+    onRemoveSubQuestion: (topicId: string, parentQuestionId: string, answerIndex: number) => void;
 }
 
-const TopicCard: React.FC<Props> = ({topic, allQuestionIds, onRemoveTopic, onAddQuestion, onRemoveQuestion, onQuestionTextChange, onQuestionTypeChange, onAddAnswer, onRemoveAnswer, onAnswerLabelChange, onRadioNextChange, onCheckBoxNextChange}) => {
+const rowStyle = xcss({
+    display: 'block',
+    borderBottomWidth: 'border.width',
+    borderBottomColor: 'color.border',
+    borderBottomStyle: 'solid',
+    padding: 'space.200'
+});
+
+const cellStyle = (width: string) =>
+    xcss({
+        display: 'inline-block',
+        verticalAlign: 'middle',
+        width
+    });
+
+const expandedContainer = xcss({
+    display: 'block',
+    padding: 'space.200'
+});
+
+const TopicCard: React.FC<Props> = ({topic, onRemoveTopic, onAddQuestion, onRemoveQuestion, onQuestionTextChange, onQuestionTypeChange, onAddAnswer, onRemoveAnswer, onAnswerLabelChange, onRadioNextChange, onCheckBoxNextChange, onAddSubQuestion, onRemoveSubQuestion}) => {
+    const [expanded, setExpanded] = useState(false);
     return (
-        <Box xcss={topicContainerStyles}>
-            <Box xcss={headingRowStyles}>
-                <Heading as="h3">Topic {topic.topicId}</Heading>
+        <Box>
+            <Box xcss={rowStyle}>
+                <Box xcss={cellStyle('20%')}>
+                    <Heading as="h4">Topic {topic.topicId}</Heading>
+                </Box>
+                <Box xcss={cellStyle('20%')}>
+                    <Text>Questions: {topic.questions.length}</Text>
+                </Box>
+                <Box xcss={cellStyle('40%')}>
+                    <Button appearance="default" onClick={() => setExpanded(!expanded)}>
+                        {expanded ? 'Collapse' : 'Expand'}
+                    </Button>
+                </Box>
+                <Box xcss={cellStyle('20%')}>
+                    <Button appearance="danger" onClick={() => onRemoveTopic(topic.topicId)}>
+                        Remove
+                    </Button>
+                </Box>
             </Box>
-            <Box xcss={removeButtonWrapperStyles}>
-                <Button appearance="danger" onClick={() => onRemoveTopic(topic.topicId)}>
-                    Remove
-                </Button>
-            </Box>
-
-            <Box xcss={addQuestionWrapperStyles}>
-                <Button appearance="default" onClick={() => onAddQuestion(topic.topicId)}>
-                    + Add Question
-                </Button>
-            </Box>
-
-            {topic.questions.map((question) => (
-                <QuestionCard
-                    key={question.id}
-                    topicId={topic.topicId}
-                    question={question}
-                    allQuestionIds={allQuestionIds}
-                    onRemoveQuestion={onRemoveQuestion}
-                    onQuestionTextChange={onQuestionTextChange}
-                    onQuestionTypeChange={onQuestionTypeChange}
-                    onAddAnswer={onAddAnswer}
-                    onRemoveAnswer={onRemoveAnswer}
-                    onAnswerLabelChange={onAnswerLabelChange}
-                    onRadioNextChange={onRadioNextChange}
-                    onCheckBoxNextChange={onCheckBoxNextChange}
-                />
-            ))}
+            {expanded && (
+                <Box xcss={expandedContainer}>
+                    <Button appearance="default" onClick={() => onAddQuestion(topic.topicId)}>
+                        + Add Question
+                    </Button>
+                    {topic.questions.map(q => (
+                        <QuestionNodeCard
+                            key={q.id}
+                            topicId={topic.topicId}
+                            question={q}
+                            allQuestions={topic.questions}
+                            level={0}
+                            onRemoveQuestion={onRemoveQuestion}
+                            onQuestionTextChange={onQuestionTextChange}
+                            onQuestionTypeChange={onQuestionTypeChange}
+                            onAddAnswer={onAddAnswer}
+                            onRemoveAnswer={onRemoveAnswer}
+                            onAnswerLabelChange={onAnswerLabelChange}
+                            onRadioNextChange={onRadioNextChange}
+                            onCheckBoxNextChange={onCheckBoxNextChange}
+                            onAddSubQuestion={onAddSubQuestion}
+                            onRemoveSubQuestion={onRemoveSubQuestion}
+                        />
+                    ))}
+                </Box>
+            )}
         </Box>
     );
 };
